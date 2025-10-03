@@ -170,7 +170,7 @@ if st.button("Genera Auto"):
         bg.alpha_composite(shadow_layer)
 
         final_image = add_glow_frame(bg, dominant_color)
-        final_image = add_signature(final_image, "@pakolabb", y_offset=500)
+        final_image = add_signature(final_image, "@pakolabb", y_offset=400)
 
         st.image(final_image, caption="La tua Supra personalizzata", use_container_width=True)
 
