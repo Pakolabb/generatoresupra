@@ -4,10 +4,10 @@ from PIL.Image import Resampling
 import os
 import random
 import time
+import math
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Cartelle parti variabili
 folders = {
     "Tetto": "tetto",
     "Cofano": "cofano",
@@ -16,17 +16,14 @@ folders = {
     "Cerchioni": "cerchioni",
 }
 
-# File fissi
 fixed_files = [
     "gomme.png",
     "ombra.png",
     "dettagli.png"
 ]
 
-# File logo centrale
 logo_file = "Logoopacita1.png"
 
-# Probabilità colori
 color_probs = {
     "base": 0.83,
     "turchese": 0.07,
@@ -89,13 +86,13 @@ def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
     layer.paste(shadow, offset, shadow)
     return layer
 
-def animate_supra(base_canvas, shadow_path, logo_path):
+def animate_supra(base_canvas, shadow_path, logo_path, cycles=2, frames_per_cycle=30, amplitude=10):
     canvas_size = base_canvas.size
-    steps = [0, -5, -10, -5, 0, 5, 10, 5]
     placeholder = st.empty()
 
-    for dy in steps:
-        offset_y = dy
+    for i in range(cycles * frames_per_cycle):
+        angle = (i / frames_per_cycle) * 2 * math.pi
+        dy = int(math.sin(angle) * amplitude)
         shadow_offset = (0, 30 + dy)
 
         auto_layer = apply_glow(base_canvas.copy(), intensity=1.6, blur_radius=12)
@@ -104,7 +101,7 @@ def animate_supra(base_canvas, shadow_path, logo_path):
         apply_logo(shadow_layer, logo_path)
 
         placeholder.image(shadow_layer, use_container_width=True)
-        time.sleep(0.2)
+        time.sleep(0.05)
 
 st.title("Generatore Supra Fluttuante ✨")
 
