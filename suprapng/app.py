@@ -3,6 +3,7 @@ from PIL import Image, ImageEnhance, ImageFilter
 from PIL.Image import Resampling
 import os
 import random
+import time
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -76,7 +77,7 @@ def apply_logo(canvas, logo_path):
     layer.paste(logo_img, (x, y), logo_img)
     canvas.alpha_composite(layer)
 
-# Funzione effetto glow (solo sull’auto)
+# Funzione glow
 def apply_glow(image, intensity=1.6, blur_radius=12):
     blurred = image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
     enhancer = ImageEnhance.Brightness(blurred)
@@ -84,7 +85,7 @@ def apply_glow(image, intensity=1.6, blur_radius=12):
     glow.paste(image, (0, 0), image)
     return glow
 
-# Funzione ombra dinamica (senza glow)
+# Funzione ombra dinamica
 def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
     shadow = Image.open(shadow_path).convert("RGBA")
     shadow = shadow.filter(ImageFilter.GaussianBlur(radius=blur_radius))
@@ -92,8 +93,30 @@ def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
     layer.paste(shadow, offset, shadow)
     return layer
 
+# Funzione animazione fluttuante
+def animate_supra(base_canvas, shadow_path, logo_path):
+    canvas_size = base_canvas.size
+    steps = [0, -5, -10, -5, 0, 5, 10, 5]  # movimento verticale
+
+    for dy in steps:
+        offset_y = dy
+        shadow_offset = (0, 30 + dy)
+
+        # Glow solo sull’auto
+        auto_layer = apply_glow(base_canvas.copy(), intensity=1.6, blur_radius=12)
+
+        # Ombra separata
+        shadow_layer = apply_shadow(canvas_size, shadow_path, offset=shadow_offset, blur_radius=6)
+        shadow_layer.alpha_composite(auto_layer)
+
+        # Logo sopra tutto
+        apply_logo(shadow_layer, logo_path)
+
+        st.image(shadow_layer, use_container_width=True)
+        time.sleep(0.2)
+
 # Interfaccia Streamlit
-st.title("Supra Fluttuante ✨")
+st.title("Generatore Supra Fluttuante ✨")
 
 if st.button("Genera Auto"):
     canvas = None
@@ -122,24 +145,11 @@ if st.button("Genera Auto"):
             img = Image.open(fpath).convert("RGBA")
             canvas.alpha_composite(img)
 
-    # Applica logo
-    logo_path = os.path.join(BASE_DIR, logo_file)
-    if canvas and os.path.exists(logo_path):
-        apply_logo(canvas, logo_path)
-
-        # Applica glow solo all’auto
-        canvas_with_glow = apply_glow(canvas.copy(), intensity=1.6, blur_radius=12)
-
-        # Applica ombra separata
+    # Animazione fluttuante
+    if canvas:
         shadow_path = os.path.join(BASE_DIR, "ombra.png")
-        if os.path.exists(shadow_path):
-            shadow_layer = apply_shadow(canvas.size, shadow_path, offset=(0, 30), blur_radius=6)
-            shadow_layer.alpha_composite(canvas_with_glow)
-            final_image = shadow_layer
-        else:
-            final_image = canvas_with_glow
-
-        st.image(final_image, caption="La tua Supra fluttuante", use_container_width=True)
+        logo_path = os.path.join(BASE_DIR, logo_file)
+        animate_supra(canvas, shadow_path, logo_path)
 
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
