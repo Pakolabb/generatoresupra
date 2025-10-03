@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image, ImageEnhance, ImageFilter, ImageDraw
+from PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageFont
 from PIL.Image import Resampling
 import os
 import random
@@ -102,6 +102,27 @@ def add_glow_frame(canvas, color, thickness=12, blur_radius=8, intensity=1.5):
     frame.alpha_composite(glow_layer)
     return frame
 
+def create_background(size, base_color):
+    r, g, b = base_color
+    light_color = (min(r + 100, 255), min(g + 100, 255), min(b + 100, 255))
+    bg = Image.new("RGBA", size, light_color + (255,))
+    return bg
+
+def add_signature(image, text="@pakolabb", y_offset=40):
+    draw = ImageDraw.Draw(image)
+    font_size = int(image.width * 0.04)
+    try:
+        font_path = os.path.join(BASE_DIR, "arial.ttf")
+        font = ImageFont.truetype(font_path, font_size)
+    except:
+        font = ImageFont.load_default()
+
+    text_width, text_height = draw.textsize(text, font=font)
+    x = (image.width - text_width) // 2
+    y = y_offset
+    draw.text((x, y), text, font=font, fill=(0, 0, 0, 180))
+    return image
+
 st.title("Generatore Supra ✨")
 
 if st.button("Genera Auto"):
@@ -142,9 +163,13 @@ if st.button("Genera Auto"):
         apply_logo(shadow_layer, logo_path)
 
         dominant_color = carrozzeria_img.resize((1, 1)).getpixel((0, 0))[:3]
-        final_image = add_glow_frame(shadow_layer, dominant_color)
+        bg = create_background(shadow_layer.size, dominant_color)
+        bg.alpha_composite(shadow_layer)
 
-        st.image(final_image, caption="La tua Supra con cornice glow", use_container_width=True)
+        final_image = add_glow_frame(bg, dominant_color)
+        final_image = add_signature(final_image, "@pakolabb", y_offset=40)
+
+        st.image(final_image, caption="La tua Supra personalizzata", use_container_width=True)
 
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
