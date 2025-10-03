@@ -61,7 +61,7 @@ def choose_color(files):
     return random.choices(choices, weights=weights, k=1)[0]
 
 # Funzione watermark ripetuto
-def apply_watermark_grid(canvas, logo_path, opacity=190, spacing=300):
+def apply_watermark_grid(canvas, logo_path, opacity=255, spacing=300):
     logo_img = Image.open(logo_path).convert("RGBA")
     logo_img = logo_img.resize((int(logo_img.width * 0.3), int(logo_img.height * 0.3)), Image.ANTIALIAS)
 
