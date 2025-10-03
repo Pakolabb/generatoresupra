@@ -35,7 +35,6 @@ color_probs = {
     "gold": 0.01
 }
 
-# Funzione scelta colore con probabilità
 def choose_color(files):
     base_colors = [f for f in files if not any(x in f.lower() for x in ["turchese", "viola", "cf", "gold"])]
     turchese = [f for f in files if "turchese" in f.lower()]
@@ -62,7 +61,6 @@ def choose_color(files):
 
     return random.choices(choices, weights=weights, k=1)[0]
 
-# Funzione logo centrale
 def apply_logo(canvas, logo_path):
     logo_img = Image.open(logo_path).convert("RGBA")
     canvas_w, canvas_h = canvas.size
@@ -77,7 +75,6 @@ def apply_logo(canvas, logo_path):
     layer.paste(logo_img, (x, y), logo_img)
     canvas.alpha_composite(layer)
 
-# Funzione glow
 def apply_glow(image, intensity=1.6, blur_radius=12):
     blurred = image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
     enhancer = ImageEnhance.Brightness(blurred)
@@ -85,7 +82,6 @@ def apply_glow(image, intensity=1.6, blur_radius=12):
     glow.paste(image, (0, 0), image)
     return glow
 
-# Funzione ombra dinamica
 def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
     shadow = Image.open(shadow_path).convert("RGBA")
     shadow = shadow.filter(ImageFilter.GaussianBlur(radius=blur_radius))
@@ -93,36 +89,29 @@ def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
     layer.paste(shadow, offset, shadow)
     return layer
 
-# Funzione animazione fluttuante
 def animate_supra(base_canvas, shadow_path, logo_path):
     canvas_size = base_canvas.size
-    steps = [0, -5, -10, -5, 0, 5, 10, 5]  # movimento verticale
+    steps = [0, -5, -10, -5, 0, 5, 10, 5]
+    placeholder = st.empty()
 
     for dy in steps:
         offset_y = dy
         shadow_offset = (0, 30 + dy)
 
-        # Glow solo sull’auto
         auto_layer = apply_glow(base_canvas.copy(), intensity=1.6, blur_radius=12)
-
-        # Ombra separata
         shadow_layer = apply_shadow(canvas_size, shadow_path, offset=shadow_offset, blur_radius=6)
         shadow_layer.alpha_composite(auto_layer)
-
-        # Logo sopra tutto
         apply_logo(shadow_layer, logo_path)
 
-        st.image(shadow_layer, use_container_width=True)
+        placeholder.image(shadow_layer, use_container_width=True)
         time.sleep(0.2)
 
-# Interfaccia Streamlit
 st.title("Generatore Supra Fluttuante ✨")
 
 if st.button("Genera Auto"):
     canvas = None
     report = {}
 
-    # Parti variabili
     for part, folder in folders.items():
         part_folder = os.path.join(BASE_DIR, folder)
         if os.path.exists(part_folder):
@@ -138,14 +127,12 @@ if st.button("Genera Auto"):
                 except Exception as e:
                     st.warning(f"Errore nel caricamento di {chosen}: {e}")
 
-    # File fissi (escludiamo ombra)
     for f in fixed_files:
         fpath = os.path.join(BASE_DIR, f)
         if os.path.exists(fpath) and f != "ombra.png":
             img = Image.open(fpath).convert("RGBA")
             canvas.alpha_composite(img)
 
-    # Animazione fluttuante
     if canvas:
         shadow_path = os.path.join(BASE_DIR, "ombra.png")
         logo_path = os.path.join(BASE_DIR, logo_file)
