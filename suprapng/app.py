@@ -199,4 +199,4 @@ if st.button("Genera Auto"):
 
         buffer = io.BytesIO()
         final_image.save(buffer, format="PNG")
-        st.download_button("📥 Salva immagine", data=buffer.getvalue(), file_name="supra_pakolabb.png", mime="image
+    st.download_button("📥 Salva immagine", data=buffer.getvalue(), file_name="supra_pakolabb.png", mime="image/png")
