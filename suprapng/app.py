@@ -150,7 +150,8 @@ def add_signature(image, text="@pakolabb", y_offset=40):
 st.title("Generatore Supra ✨")
 st.markdown(f"**🚗 Generazioni totali effettuate: `{get_generation_count()}`**")
 
-st.markdown(f"**🚗 Generazioni totali effettuate: `{current_count}`**")
+st.markdown(f"**🚗 Generazioni totali effettuate: `{get_generation_count()}`**")
+
 
 if st.button("Genera Auto"):
     canvas = None
