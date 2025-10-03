@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 from PIL.Image import Resampling
 import os
 import random
@@ -76,8 +76,16 @@ def apply_logo(canvas, logo_path):
     layer.paste(logo_img, (x, y), logo_img)
     canvas.alpha_composite(layer)
 
+# Funzione effetto glow
+def apply_glow(canvas, intensity=1.6, blur_radius=12):
+    blurred = canvas.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+    enhancer = ImageEnhance.Brightness(blurred)
+    glow = enhancer.enhance(intensity)
+    glow.paste(canvas, (0, 0), canvas)
+    return glow
+
 # Interfaccia Streamlit
-st.title("Generatore Supra 🎨")
+st.title("Generatore Supra 🔥")
 
 if st.button("Genera Auto"):
     canvas = None
@@ -106,13 +114,14 @@ if st.button("Genera Auto"):
             img = Image.open(fpath).convert("RGBA")
             canvas.alpha_composite(img)
 
-    # Applica logo centrale
+    # Logo + Glow
     if canvas:
         logo_path = os.path.join(BASE_DIR, logo_file)
         if os.path.exists(logo_path):
             apply_logo(canvas, logo_path)
+            canvas = apply_glow(canvas, intensity=1.6, blur_radius=12)
 
-        st.image(canvas, caption="La tua Supra generata", use_container_width=True)
+        st.image(canvas, caption="La tua Supra con effetto glow", use_container_width=True)
 
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
