@@ -1,5 +1,5 @@
 import streamlit as st
-from PIL import Image, ImageEnhance
+from PIL import Image
 from PIL.Image import Resampling
 import os
 import random
@@ -15,14 +15,14 @@ folders = {
     "Cerchioni": "cerchioni",
 }
 
-# File fissi (senza logo)
+# File fissi
 fixed_files = [
     "gomme.png",
     "ombra.png",
     "dettagli.png"
 ]
 
-# File logo
+# File logo centrale
 logo_file = "Logoopacita1.png"
 
 # Probabilità colori
@@ -61,29 +61,13 @@ def choose_color(files):
 
     return random.choices(choices, weights=weights, k=1)[0]
 
-# Funzione watermark ripetuto
-def apply_watermark_grid(canvas, logo_path, opacity=160, spacing=300):
-    logo_img = Image.open(logo_path).convert("RGBA")
-    logo_img = logo_img.resize((int(logo_img.width * 0.3), int(logo_img.height * 0.3)), Resampling.LANCZOS)
-
-    alpha = logo_img.split()[3]
-    alpha = alpha.point(lambda p: opacity)
-    logo_img.putalpha(alpha)
-
-    layer = Image.new("RGBA", canvas.size, (255, 255, 255, 0))
-    for x in range(0, canvas.width, spacing):
-        for y in range(0, canvas.height, spacing):
-            layer.paste(logo_img, (x, y), logo_img)
-
-    canvas.alpha_composite(layer)
-
 # Funzione logo centrale
 def apply_logo(canvas, logo_path):
     logo_img = Image.open(logo_path).convert("RGBA")
     canvas_w, canvas_h = canvas.size
     logo_w, logo_h = logo_img.size
-    ratio = min(canvas_w/logo_w, canvas_h/logo_h) * 0.5
-    new_size = (int(logo_w*ratio), int(logo_h*ratio))
+    ratio = min(canvas_w / logo_w, canvas_h / logo_h) * 0.5
+    new_size = (int(logo_w * ratio), int(logo_h * ratio))
     logo_img = logo_img.resize(new_size, Resampling.LANCZOS)
 
     layer = Image.new("RGBA", canvas.size, (255, 255, 255, 0))
@@ -122,17 +106,14 @@ if st.button("Genera Auto"):
             img = Image.open(fpath).convert("RGBA")
             canvas.alpha_composite(img)
 
-    # Applica watermark e logo
+    # Applica logo centrale
     if canvas:
         logo_path = os.path.join(BASE_DIR, logo_file)
         if os.path.exists(logo_path):
-            apply_watermark_grid(canvas, logo_path)  # watermark ripetuto
-            apply_logo(canvas, logo_path)            # logo centrale sopra tutto
+            apply_logo(canvas, logo_path)
 
-        # Mostra canvas finale
         st.image(canvas, caption="La tua Supra generata", use_container_width=True)
 
-        # Mostra report
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
             st.write(f"**{part}** → {colore}")
