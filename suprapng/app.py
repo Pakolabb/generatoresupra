@@ -3,6 +3,7 @@ from PIL import Image, ImageEnhance, ImageFilter, ImageDraw, ImageFont
 from PIL.Image import Resampling
 import os
 import random
+import io
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -110,7 +111,7 @@ def create_background(size, base_color):
 
 def add_signature(image, text="@pakolabb", y_offset=40):
     draw = ImageDraw.Draw(image)
-    font_size = int(image.width * 0.04)
+    font_size = int(image.width * 0.06)
     try:
         font_path = os.path.join(BASE_DIR, "arial.ttf")
         font = ImageFont.truetype(font_path, font_size)
@@ -122,7 +123,7 @@ def add_signature(image, text="@pakolabb", y_offset=40):
     text_height = bbox[3] - bbox[1]
     x = (image.width - text_width) // 2
     y = y_offset
-    draw.text((x, y), text, font=font, fill=(0, 0, 0, 180))
+    draw.text((x, y), text, font=font, fill=(0, 0, 0, 200))
     return image
 
 st.title("Generatore Supra ✨")
@@ -172,6 +173,11 @@ if st.button("Genera Auto"):
         final_image = add_signature(final_image, "@pakolabb", y_offset=40)
 
         st.image(final_image, caption="La tua Supra personalizzata", use_container_width=True)
+
+        # Salvataggio immagine
+        buffer = io.BytesIO()
+        final_image.save(buffer, format="PNG")
+        st.download_button("📥 Salva immagine", data=buffer.getvalue(), file_name="supra_pakolabb.png", mime="image/png")
 
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
