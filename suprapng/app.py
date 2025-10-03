@@ -76,16 +76,24 @@ def apply_logo(canvas, logo_path):
     layer.paste(logo_img, (x, y), logo_img)
     canvas.alpha_composite(layer)
 
-# Funzione effetto glow
-def apply_glow(canvas, intensity=1.6, blur_radius=12):
-    blurred = canvas.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+# Funzione effetto glow (solo sull’auto)
+def apply_glow(image, intensity=1.6, blur_radius=12):
+    blurred = image.filter(ImageFilter.GaussianBlur(radius=blur_radius))
     enhancer = ImageEnhance.Brightness(blurred)
     glow = enhancer.enhance(intensity)
-    glow.paste(canvas, (0, 0), canvas)
+    glow.paste(image, (0, 0), image)
     return glow
 
+# Funzione ombra dinamica (senza glow)
+def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
+    shadow = Image.open(shadow_path).convert("RGBA")
+    shadow = shadow.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+    layer = Image.new("RGBA", base_size, (255, 255, 255, 0))
+    layer.paste(shadow, offset, shadow)
+    return layer
+
 # Interfaccia Streamlit
-st.title("Generatore Supra 🔥")
+st.title("Supra Fluttuante ✨")
 
 if st.button("Genera Auto"):
     canvas = None
@@ -107,21 +115,31 @@ if st.button("Genera Auto"):
                 except Exception as e:
                     st.warning(f"Errore nel caricamento di {chosen}: {e}")
 
-    # File fissi
+    # File fissi (escludiamo ombra)
     for f in fixed_files:
         fpath = os.path.join(BASE_DIR, f)
-        if os.path.exists(fpath):
+        if os.path.exists(fpath) and f != "ombra.png":
             img = Image.open(fpath).convert("RGBA")
             canvas.alpha_composite(img)
 
-    # Logo + Glow
-    if canvas:
-        logo_path = os.path.join(BASE_DIR, logo_file)
-        if os.path.exists(logo_path):
-            apply_logo(canvas, logo_path)
-            canvas = apply_glow(canvas, intensity=1.6, blur_radius=12)
+    # Applica logo
+    logo_path = os.path.join(BASE_DIR, logo_file)
+    if canvas and os.path.exists(logo_path):
+        apply_logo(canvas, logo_path)
 
-        st.image(canvas, caption="La tua Supra con effetto glow", use_container_width=True)
+        # Applica glow solo all’auto
+        canvas_with_glow = apply_glow(canvas.copy(), intensity=1.6, blur_radius=12)
+
+        # Applica ombra separata
+        shadow_path = os.path.join(BASE_DIR, "ombra.png")
+        if os.path.exists(shadow_path):
+            shadow_layer = apply_shadow(canvas.size, shadow_path, offset=(0, 30), blur_radius=6)
+            shadow_layer.alpha_composite(canvas_with_glow)
+            final_image = shadow_layer
+        else:
+            final_image = canvas_with_glow
+
+        st.image(final_image, caption="La tua Supra fluttuante", use_container_width=True)
 
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
