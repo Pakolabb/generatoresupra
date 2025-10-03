@@ -117,7 +117,9 @@ def add_signature(image, text="@pakolabb", y_offset=40):
     except:
         font = ImageFont.load_default()
 
-    text_width, text_height = draw.textsize(text, font=font)
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
     x = (image.width - text_width) // 2
     y = y_offset
     draw.text((x, y), text, font=font, fill=(0, 0, 0, 180))
