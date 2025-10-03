@@ -1,10 +1,8 @@
 import streamlit as st
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageEnhance, ImageFilter, ImageDraw
 from PIL.Image import Resampling
 import os
 import random
-import time
-import math
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -86,28 +84,30 @@ def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
     layer.paste(shadow, offset, shadow)
     return layer
 
-def animate_supra(base_canvas, shadow_path, logo_path, cycles=2, frames_per_cycle=30, amplitude=10):
-    canvas_size = base_canvas.size
-    placeholder = st.empty()
+def add_glow_frame(canvas, color, thickness=12, blur_radius=8, intensity=1.5):
+    w, h = canvas.size
+    frame = Image.new("RGBA", (w + thickness*2, h + thickness*2), (0, 0, 0, 0))
+    frame.paste(canvas, (thickness, thickness), canvas)
 
-    for i in range(cycles * frames_per_cycle):
-        angle = (i / frames_per_cycle) * 2 * math.pi
-        dy = int(math.sin(angle) * amplitude)
-        shadow_offset = (0, 30 + dy)
+    glow_layer = Image.new("RGBA", frame.size, color + (255,))
+    mask = Image.new("L", frame.size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rectangle([0, 0, frame.size[0], frame.size[1]], outline=255, width=thickness)
 
-        auto_layer = apply_glow(base_canvas.copy(), intensity=1.6, blur_radius=12)
-        shadow_layer = apply_shadow(canvas_size, shadow_path, offset=shadow_offset, blur_radius=6)
-        shadow_layer.alpha_composite(auto_layer)
-        apply_logo(shadow_layer, logo_path)
+    glow_layer.putalpha(mask)
+    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+    enhancer = ImageEnhance.Brightness(glow_layer)
+    glow_layer = enhancer.enhance(intensity)
 
-        placeholder.image(shadow_layer, use_container_width=True)
-        time.sleep(0.05)
+    frame.alpha_composite(glow_layer)
+    return frame
 
-st.title("Generatore Supra Fluttuante ✨")
+st.title("Generatore Supra ✨")
 
 if st.button("Genera Auto"):
     canvas = None
     report = {}
+    carrozzeria_img = None
 
     for part, folder in folders.items():
         part_folder = os.path.join(BASE_DIR, folder)
@@ -121,6 +121,8 @@ if st.button("Genera Auto"):
                         canvas = Image.new("RGBA", img.size, (255, 255, 255, 0))
                     canvas.alpha_composite(img)
                     report[part] = os.path.splitext(chosen)[0]
+                    if part == "Carrozzeria":
+                        carrozzeria_img = img.copy()
                 except Exception as e:
                     st.warning(f"Errore nel caricamento di {chosen}: {e}")
 
@@ -130,10 +132,19 @@ if st.button("Genera Auto"):
             img = Image.open(fpath).convert("RGBA")
             canvas.alpha_composite(img)
 
-    if canvas:
+    if canvas and carrozzeria_img:
         shadow_path = os.path.join(BASE_DIR, "ombra.png")
         logo_path = os.path.join(BASE_DIR, logo_file)
-        animate_supra(canvas, shadow_path, logo_path)
+
+        auto_layer = apply_glow(canvas.copy(), intensity=1.6, blur_radius=12)
+        shadow_layer = apply_shadow(canvas.size, shadow_path, offset=(0, 30), blur_radius=6)
+        shadow_layer.alpha_composite(auto_layer)
+        apply_logo(shadow_layer, logo_path)
+
+        dominant_color = carrozzeria_img.resize((1, 1)).getpixel((0, 0))[:3]
+        final_image = add_glow_frame(shadow_layer, dominant_color)
+
+        st.image(final_image, caption="La tua Supra con cornice glow", use_container_width=True)
 
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
