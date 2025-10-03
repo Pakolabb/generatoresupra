@@ -3,6 +3,8 @@ from PIL import Image, ImageEnhance, ImageFilter
 from PIL.Image import Resampling
 import os
 import random
+import time
+import math
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -84,7 +86,24 @@ def apply_shadow(base_size, shadow_path, offset=(0, 30), blur_radius=6):
     layer.paste(shadow, offset, shadow)
     return layer
 
-st.title("Generatore Supra ✨")
+def animate_supra(base_canvas, shadow_path, logo_path, cycles=2, frames_per_cycle=30, amplitude=10):
+    canvas_size = base_canvas.size
+    placeholder = st.empty()
+
+    for i in range(cycles * frames_per_cycle):
+        angle = (i / frames_per_cycle) * 2 * math.pi
+        dy = int(math.sin(angle) * amplitude)
+        shadow_offset = (0, 30 + dy)
+
+        auto_layer = apply_glow(base_canvas.copy(), intensity=1.6, blur_radius=12)
+        shadow_layer = apply_shadow(canvas_size, shadow_path, offset=shadow_offset, blur_radius=6)
+        shadow_layer.alpha_composite(auto_layer)
+        apply_logo(shadow_layer, logo_path)
+
+        placeholder.image(shadow_layer, use_container_width=True)
+        time.sleep(0.05)
+
+st.title("Generatore Supra Fluttuante ✨")
 
 if st.button("Genera Auto"):
     canvas = None
@@ -114,13 +133,7 @@ if st.button("Genera Auto"):
     if canvas:
         shadow_path = os.path.join(BASE_DIR, "ombra.png")
         logo_path = os.path.join(BASE_DIR, logo_file)
-
-        auto_layer = apply_glow(canvas.copy(), intensity=1.6, blur_radius=12)
-        shadow_layer = apply_shadow(canvas.size, shadow_path, offset=(0, 30), blur_radius=6)
-        shadow_layer.alpha_composite(auto_layer)
-        apply_logo(shadow_layer, logo_path)
-
-        st.image(shadow_layer, caption="La tua Supra generata", use_container_width=True)
+        animate_supra(canvas, shadow_path, logo_path)
 
         st.subheader("Dettagli generazione:")
         for part, colore in report.items():
