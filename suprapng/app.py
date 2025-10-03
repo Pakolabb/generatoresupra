@@ -7,6 +7,26 @@ import io
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Contatore globale
+def get_generation_count():
+    counter_path = os.path.join(BASE_DIR, "counter.txt")
+    if not os.path.exists(counter_path):
+        with open(counter_path, "w") as f:
+            f.write("0")
+    with open(counter_path, "r") as f:
+        try:
+            count = int(f.read().strip())
+        except:
+            count = 0
+    return count
+
+def increment_generation_count():
+    counter_path = os.path.join(BASE_DIR, "counter.txt")
+    count = get_generation_count() + 1
+    with open(counter_path, "w") as f:
+        f.write(str(count))
+    return count
+
 folders = {
     "Tetto": "tetto",
     "Cofano": "cofano",
@@ -126,7 +146,10 @@ def add_signature(image, text="@pakolabb", y_offset=40):
     draw.text((x, y), text, font=font, fill=(0, 0, 0, 200))
     return image
 
+# Interfaccia
 st.title("Generatore Supra ✨")
+current_count = get_generation_count()
+st.markdown(f"**🚗 Generazioni totali effettuate: `{current_count}`**")
 
 if st.button("Genera Auto"):
     canvas = None
@@ -174,13 +197,6 @@ if st.button("Genera Auto"):
 
         st.image(final_image, caption="La tua Supra personalizzata", use_container_width=True)
 
-        # Salvataggio immagine
         buffer = io.BytesIO()
         final_image.save(buffer, format="PNG")
-        st.download_button("📥 Salva immagine", data=buffer.getvalue(), file_name="supra_pakolabb.png", mime="image/png")
-
-        st.subheader("Dettagli generazione:")
-        for part, colore in report.items():
-            st.write(f"**{part}** → {colore}")
-    else:
-        st.write("Nessuna immagine trovata!")
+        st.download_button("📥 Salva immagine", data=buffer.getvalue(), file_name="supra_pakolabb.png", mime="image
